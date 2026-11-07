@@ -1,0 +1,6 @@
+@aula_guiada_monolito_gemini.Api_HostAddress = http://localhost:5201
+
+GET {{aula_guiada_monolito_gemini.Api_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###

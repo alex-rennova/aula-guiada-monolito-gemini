@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Guia de Arquitetura: Monólito Moderno em .NET</title>
+    <link rel="stylesheet" href="assets/css/style.css">
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220%22><text y=%2226%22 font-size=%2224%22>🏛️</text></svg>">
+</head>
+<body>
+
+    <!-- Sidebar de Navegação das Aulas -->
+    <aside class="sidebar">
+        <div class="brand">
+            <div class="brand-icon">🏛️</div>
+            <div class="brand-text">
+                <h1>Monólito Moderno</h1>
+                <p>.NET 10 • Clean & Modular</p>
+            </div>
+        </div>
+
+        <nav class="nav-container">
+            <div class="nav-section-title">Fundamentos</div>
+            <div class="nav-item active" data-lesson="overview">
+                <span>🌐</span>
+                <span>Visão Geral & Por Que Monólito?</span>
+                <span class="nav-badge">Guia</span>
+            </div>
+
+            <div class="nav-section-title">Aulas Práticas</div>
+            <div class="nav-item" data-lesson="aula01">
+                <span>⚡</span>
+                <span>Aula 01: Clean DI & Modularity</span>
+                <span class="nav-badge">Concluída</span>
+            </div>
+            <div class="nav-item" data-lesson="aula02">
+                <span>🎯</span>
+                <span>Aula 02: Result Pattern & Domain</span>
+                <span class="nav-badge pending">A seguir</span>
+            </div>
+        </nav>
+    </aside>
+
+    <!-- Conteúdo Principal Dinâmico -->
+    <div class="main-wrapper">
+        <header class="top-bar">
+            <div class="breadcrumb">
+                <span>Monólito Guiado</span>
+                <span>/</span>
+                <span class="current" id="breadcrumb-current">Visão Geral</span>
+            </div>
+            <div class="status-pill">
+                <span class="status-dot"></span>
+                <span>Solução 100% Compilando</span>
+            </div>
+        </header>
+
+        <main class="content-container">
+            <!-- Hero / Cabeçalho da Aula -->
+            <section class="hero">
+                <span class="hero-tag" id="hero-tag">Visão Geral</span>
+                <h2 id="hero-title">Por que Monólitos Modernos e não Microsserviços Prematuros?</h2>
+                <p id="hero-desc">Uma análise profunda de engenharia sobre a complexidade acidental, distribuição pragmática e como o .NET 10 permite construir arquiteturas altamente desacopladas dentro de um único deploy.</p>
+            </section>
+
+            <!-- Corpo da Aula carregado via JavaScript -->
+            <div id="lesson-body"></div>
+        </main>
+    </div>
+
+    <script src="assets/js/app.js"></script>
+</body>
+</html>
+

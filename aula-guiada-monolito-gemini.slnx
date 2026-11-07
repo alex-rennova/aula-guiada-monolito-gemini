@@ -1,0 +1,12 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/aula-guiada-monolito-gemini.Api/aula-guiada-monolito-gemini.Api.csproj" />
+    <Project Path="src/aula-guiada-monolito-gemini.Application/aula-guiada-monolito-gemini.Application.csproj" />
+    <Project Path="src/aula-guiada-monolito-gemini.Domain/aula-guiada-monolito-gemini.Domain.csproj" />
+    <Project Path="src/aula-guiada-monolito-gemini.Infrastructure/aula-guiada-monolito-gemini.Infrastructure.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/aula-guiada-monolito-gemini.IntegrationTests/aula-guiada-monolito-gemini.IntegrationTests.csproj" />
+    <Project Path="tests/aula-guiada-monolito-gemini.UnitTests/aula-guiada-monolito-gemini.UnitTests.csproj" />
+  </Folder>
+</Solution>
