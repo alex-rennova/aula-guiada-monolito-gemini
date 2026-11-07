@@ -1,5 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using aula_guiada_monolito_gemini.Domain.Entities;
+using aula_guiada_monolito_gemini.Domain.ValueObjects;
 
 namespace aula_guiada_monolito_gemini.Infrastructure.Data;
 
@@ -10,21 +11,104 @@ public sealed class AppDbContext : DbContext
     {
     }
 
-    public DbSet<Product> Products => Set<Product>();
+    // Contexto: Clientes
+    public DbSet<Cliente> Clientes => Set<Cliente>();
 
-    protected override void OnModelCreating(
-        ModelBuilder modelBuilder)
+    // Contexto: Contas
+    public DbSet<Conta> Contas => Set<Conta>();
+
+    // Contexto: Movimentação Financeira
+    public DbSet<LancamentoFinanceiro> Lancamentos => Set<LancamentoFinanceiro>();
+
+    // Contexto: Pagamentos
+    public DbSet<OperacaoPagamento> Pagamentos => Set<OperacaoPagamento>();
+
+    // Contexto: Seguros
+    public DbSet<PropostaSeguro> Seguros => Set<PropostaSeguro>();
+
+    // Contexto: Investimentos
+    public DbSet<PosicaoInvestimento> Investimentos => Set<PosicaoInvestimento>();
+
+    protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
-        modelBuilder.Entity<Product>(entity =>
+        // 1. Clientes (Schema/Tabela: clientes)
+        modelBuilder.Entity<Cliente>(entity =>
         {
+            entity.ToTable("clientes");
             entity.HasKey(x => x.Id);
-
-            entity.Property(x => x.Name)
-                .HasMaxLength(200)
+            entity.Property(x => x.Nome).HasMaxLength(150).IsRequired();
+            entity.Property(x => x.Email).HasMaxLength(120).IsRequired();
+            entity.Property(x => x.Cpf)
+                .HasConversion(cpf => cpf.Value, val => Cpf.Create(val).Value)
+                .HasMaxLength(11)
                 .IsRequired();
+            entity.HasIndex(x => x.Cpf).IsUnique();
+        });
 
-            entity.Property(x => x.Price)
-                .HasPrecision(18, 2);
+        // 2. Contas (Schema/Tabela: contas)
+        modelBuilder.Entity<Conta>(entity =>
+        {
+            entity.ToTable("contas");
+            entity.HasKey(x => x.Id);
+            entity.Property(x => x.Numero).HasMaxLength(20).IsRequired();
+            entity.Property(x => x.Agencia).HasMaxLength(10).IsRequired();
+            entity.HasIndex(x => new { x.Agencia, x.Numero }).IsUnique();
+        });
+
+        // 3. Movimentações Financeiras (Schema/Tabela: lancamentos_financeiros)
+        modelBuilder.Entity<LancamentoFinanceiro>(entity =>
+        {
+            entity.ToTable("lancamentos_financeiros");
+            entity.HasKey(x => x.Id);
+            entity.Property(x => x.Descricao).HasMaxLength(255).IsRequired();
+            entity.Property(x => x.Valor)
+                .HasConversion(m => m.Amount, val => Money.Create(val).Value)
+                .HasPrecision(18, 2)
+                .IsRequired();
+        });
+
+        // 4. Pagamentos (Schema/Tabela: operacoes_pagamento)
+        modelBuilder.Entity<OperacaoPagamento>(entity =>
+        {
+            entity.ToTable("operacoes_pagamento");
+            entity.HasKey(x => x.Id);
+            entity.Property(x => x.CodigoBarrasOuPix).HasMaxLength(150).IsRequired();
+            entity.Property(x => x.Valor)
+                .HasConversion(m => m.Amount, val => Money.Create(val).Value)
+                .HasPrecision(18, 2)
+                .IsRequired();
+        });
+
+        // 5. Seguros (Schema/Tabela: propostas_seguro)
+        modelBuilder.Entity<PropostaSeguro>(entity =>
+        {
+            entity.ToTable("propostas_seguro");
+            entity.HasKey(x => x.Id);
+            entity.Property(x => x.TipoSeguro).HasMaxLength(50).IsRequired();
+            entity.Property(x => x.PremioMensal)
+                .HasConversion(m => m.Amount, val => Money.Create(val).Value)
+                .HasPrecision(18, 2)
+                .IsRequired();
+            entity.Property(x => x.CapitalSegurado)
+                .HasConversion(m => m.Amount, val => Money.Create(val).Value)
+                .HasPrecision(18, 2)
+                .IsRequired();
+        });
+
+        // 6. Investimentos (Schema/Tabela: posicoes_investimento)
+        modelBuilder.Entity<PosicaoInvestimento>(entity =>
+        {
+            entity.ToTable("posicoes_investimento");
+            entity.HasKey(x => x.Id);
+            entity.Property(x => x.Ativo).HasMaxLength(100).IsRequired();
+            entity.Property(x => x.ValorAplicado)
+                .HasConversion(m => m.Amount, val => Money.Create(val).Value)
+                .HasPrecision(18, 2)
+                .IsRequired();
+            entity.Property(x => x.SaldoAtual)
+                .HasConversion(m => m.Amount, val => Money.Create(val).Value)
+                .HasPrecision(18, 2)
+                .IsRequired();
         });
     }
 }

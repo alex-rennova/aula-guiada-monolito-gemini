@@ -1,16 +1,25 @@
+using aula_guiada_monolito_gemini.Domain.Common;
+
 namespace aula_guiada_monolito_gemini.Domain.ValueObjects;
 
 public sealed record Money
 {
-    public decimal Value { get; }
+    public decimal Amount { get; }
 
-    public Money(decimal value)
+    private Money(decimal amount)
     {
-        if (value < 0)
-            throw new ArgumentException("Money cannot be negative.");
-
-        Value = value;
+        Amount = amount;
     }
 
-    public static implicit operator decimal(Money money) => money.Value;
+    public static Result<Money> Create(decimal amount)
+    {
+        if (amount < 0)
+            return Result.Failure<Money>(Error.Validation("Money.Negative", "Money amount cannot be negative."));
+
+        return Result.Success(new Money(amount));
+    }
+
+    public static implicit operator decimal(Money money) => money.Amount;
+
+    public override string ToString() => Amount.ToString("C");
 }

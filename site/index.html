@@ -3,39 +3,50 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Guia de Arquitetura: Monólito Moderno em .NET</title>
+    <title>Banco Digital: Arquitetura Monolítica & Evolução para Microsserviços</title>
     <link rel="stylesheet" href="assets/css/style.css">
-    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220%22><text y=%2226%22 font-size=%2224%22>🏛️</text></svg>">
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220%22><text y=%2226%22 font-size=%2224%22>🏦</text></svg>">
 </head>
 <body>
 
+    <!-- Overlay escuro para clique fora do menu no mobile -->
+    <div class="sidebar-overlay" id="sidebar-overlay"></div>
+
     <!-- Sidebar de Navegação das Aulas -->
-    <aside class="sidebar">
+    <aside class="sidebar" id="sidebar">
         <div class="brand">
-            <div class="brand-icon">🏛️</div>
-            <div class="brand-text">
-                <h1>Monólito Moderno</h1>
-                <p>.NET 10 • Clean & Modular</p>
+            <div class="brand-main">
+                <div class="brand-icon">🏦</div>
+                <div class="brand-text">
+                    <h1>Banco Digital</h1>
+                    <p>.NET 10 • PostgreSQL • Monólito</p>
+                </div>
             </div>
+            <button class="close-sidebar-btn" id="close-sidebar-btn" aria-label="Fechar menu">✕</button>
         </div>
 
         <nav class="nav-container">
-            <div class="nav-section-title">Fundamentos</div>
+            <div class="nav-section-title">Arquitetura Geral</div>
             <div class="nav-item active" data-lesson="overview">
                 <span>🌐</span>
-                <span>Visão Geral & Por Que Monólito?</span>
-                <span class="nav-badge">Guia</span>
+                <span>Visão do Banco & Canais</span>
+                <span class="nav-badge">Arquitetura</span>
             </div>
 
-            <div class="nav-section-title">Aulas Práticas</div>
+            <div class="nav-section-title">Domínios & Aulas</div>
             <div class="nav-item" data-lesson="aula01">
                 <span>⚡</span>
-                <span>Aula 01: Clean DI & Modularity</span>
+                <span>Fundamentos: Clean DI</span>
                 <span class="nav-badge">Concluída</span>
             </div>
             <div class="nav-item" data-lesson="aula02">
+                <span>🏛️</span>
+                <span>Modelagem: 6 Áreas do Banco</span>
+                <span class="nav-badge">Concluída</span>
+            </div>
+            <div class="nav-item" data-lesson="aula03">
                 <span>🎯</span>
-                <span>Aula 02: Result Pattern & Domain</span>
+                <span>Casos de Uso & FluentValidation</span>
                 <span class="nav-badge pending">A seguir</span>
             </div>
         </nav>
@@ -44,10 +55,13 @@
     <!-- Conteúdo Principal Dinâmico -->
     <div class="main-wrapper">
         <header class="top-bar">
-            <div class="breadcrumb">
-                <span>Monólito Guiado</span>
-                <span>/</span>
-                <span class="current" id="breadcrumb-current">Visão Geral</span>
+            <div class="top-bar-left">
+                <button class="menu-toggle-btn" id="menu-toggle-btn" aria-label="Abrir menu">☰</button>
+                <div class="breadcrumb">
+                    <span>Banco Digital</span>
+                    <span>/</span>
+                    <span class="current" id="breadcrumb-current">Visão do Banco & Canais</span>
+                </div>
             </div>
             <div class="status-pill">
                 <span class="status-dot"></span>
@@ -58,9 +72,9 @@
         <main class="content-container">
             <!-- Hero / Cabeçalho da Aula -->
             <section class="hero">
-                <span class="hero-tag" id="hero-tag">Visão Geral</span>
-                <h2 id="hero-title">Por que Monólitos Modernos e não Microsserviços Prematuros?</h2>
-                <p id="hero-desc">Uma análise profunda de engenharia sobre a complexidade acidental, distribuição pragmática e como o .NET 10 permite construir arquiteturas altamente desacopladas dentro de um único deploy.</p>
+                <span class="hero-tag" id="hero-tag">Arquitetura de Referência</span>
+                <h2 id="hero-title">Banco Digital: Do Monólito Modular aos Microsserviços</h2>
+                <p id="hero-desc">Uma simulação real de uma instituição financeira completa (Clientes, Contas, Pagamentos, Seguros e Investimentos) operando em um monólito coeso no PostgreSQL, mas projetado para ser decomposto sem dor.</p>
             </section>
 
             <!-- Corpo da Aula carregado via JavaScript -->
@@ -71,4 +85,3 @@
     <script src="assets/js/app.js"></script>
 </body>
 </html>
-
