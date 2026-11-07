@@ -49,3 +49,4 @@ public class Cliente
     public void Bloquear() => Situacao = SituacaoCadastral.Bloqueado;
     public void Ativar() => Situacao = SituacaoCadastral.Ativo;
 }
+

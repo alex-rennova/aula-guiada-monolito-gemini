@@ -44,3 +44,4 @@ public class Conta
     public void Bloquear() => Status = StatusConta.Bloqueada;
     public void Encerrar() => Status = StatusConta.Encerrada;
 }
+

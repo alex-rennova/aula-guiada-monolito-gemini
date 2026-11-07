@@ -55,3 +55,4 @@ public class OperacaoPagamento
     public void Falhar() => Status = StatusOperacao.Falha;
     public void Cancelar() => Status = StatusOperacao.Cancelado;
 }
+

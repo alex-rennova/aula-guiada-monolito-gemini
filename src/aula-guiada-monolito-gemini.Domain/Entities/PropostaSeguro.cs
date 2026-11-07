@@ -54,3 +54,4 @@ public class PropostaSeguro
     public void EmitirApolice() => Status = StatusApolice.Emitida;
     public void Cancelar() => Status = StatusApolice.Cancelada;
 }
+

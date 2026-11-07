@@ -7,3 +7,4 @@ public enum StatusConta
     Bloqueada = 3,
     Encerrada = 4
 }
+

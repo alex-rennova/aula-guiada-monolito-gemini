@@ -8,3 +8,4 @@ public enum StatusApolice
     Cancelada = 4,
     Sinistrada = 5
 }
+

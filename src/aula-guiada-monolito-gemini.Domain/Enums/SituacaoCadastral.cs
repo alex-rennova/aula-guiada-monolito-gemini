@@ -7,3 +7,4 @@ public enum SituacaoCadastral
     Bloqueado = 3,
     Encerrado = 4
 }
+

@@ -62,3 +62,4 @@ public class BancoDigitalDomainTests
         Assert.Equal("Investimento.SaldoInsuficiente", resgateResult.Error.Code);
     }
 }
+

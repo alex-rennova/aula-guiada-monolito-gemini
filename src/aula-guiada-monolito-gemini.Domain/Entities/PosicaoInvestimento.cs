@@ -62,3 +62,4 @@ public class PosicaoInvestimento
         return Result.Success();
     }
 }
+

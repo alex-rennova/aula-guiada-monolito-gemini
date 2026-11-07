@@ -8,3 +8,4 @@ public enum StatusOperacao
     Falha = 4,
     Cancelado = 5
 }
+

@@ -43,3 +43,4 @@ public class LancamentoFinanceiro
             DateTime.UtcNow));
     }
 }
+

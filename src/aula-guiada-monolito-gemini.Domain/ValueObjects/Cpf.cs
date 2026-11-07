@@ -24,3 +24,4 @@ public sealed record Cpf
     public static implicit operator string(Cpf cpf) => cpf.Value;
     public override string ToString() => Value;
 }
+

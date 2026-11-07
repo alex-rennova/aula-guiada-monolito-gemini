@@ -8,3 +8,4 @@ public enum TipoPosicao
     CDB = 4,
     TesouroDireto = 5
 }
+

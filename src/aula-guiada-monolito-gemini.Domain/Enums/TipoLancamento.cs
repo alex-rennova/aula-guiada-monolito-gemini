@@ -7,3 +7,4 @@ public enum TipoLancamento
     Reserva = 3,
     Estorno = 4
 }
+

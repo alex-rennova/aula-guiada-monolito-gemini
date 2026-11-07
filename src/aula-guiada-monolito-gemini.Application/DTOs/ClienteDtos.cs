@@ -16,3 +16,4 @@ public sealed record CriarClienteRequest(
     string Email,
     string Cpf
 );
+
