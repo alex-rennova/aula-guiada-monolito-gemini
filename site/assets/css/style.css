@@ -445,6 +445,108 @@ pre {
     color: #f1f5f9;
 }
 
+/* Analogias e Exemplos Visuais do Mundo Real */
+.real-world-analogy {
+    background: linear-gradient(135deg, #f0fdf4 0%, #ecfdf5 100%);
+    border: 1px solid #a7f3d0;
+    border-left: 5px solid #059669;
+    border-radius: 12px;
+    padding: 20px 24px;
+    margin: 20px 0;
+    box-shadow: var(--shadow-sm);
+}
+
+.real-world-analogy-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 10px;
+}
+
+.real-world-analogy-header h4 {
+    font-size: 1rem;
+    font-weight: 700;
+    color: #065f46;
+}
+
+.real-world-analogy p {
+    font-size: 0.92rem;
+    line-height: 1.65;
+    color: #047857;
+}
+
+/* Deep Dive Card (Estrutura detalhada) */
+.deep-dive-card {
+    background: #ffffff;
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 24px;
+    margin-bottom: 24px;
+    box-shadow: var(--shadow-sm);
+}
+
+.deep-dive-title {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 16px;
+    flex-wrap: wrap;
+    gap: 10px;
+}
+
+.deep-dive-title h4 {
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: var(--text-primary);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.file-tag {
+    font-family: "Fira Code", monospace;
+    font-size: 0.78rem;
+    background: #f1f5f9;
+    color: #0f172a;
+    padding: 4px 10px;
+    border-radius: 6px;
+    border: 1px solid #cbd5e1;
+}
+
+.step-by-step {
+    list-style: none;
+    margin: 16px 0;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.step-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    padding: 12px 16px;
+    font-size: 0.9rem;
+    color: var(--text-secondary);
+}
+
+.step-number {
+    background: var(--accent);
+    color: #ffffff;
+    font-weight: 700;
+    font-size: 0.78rem;
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
 /* Architecture Interactive Diagram */
 .diagram-canvas {
     background: var(--bg-card);
@@ -623,6 +725,10 @@ pre {
     }
 
     .card-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .comparison-container {
         grid-template-columns: 1fr;
     }
 
