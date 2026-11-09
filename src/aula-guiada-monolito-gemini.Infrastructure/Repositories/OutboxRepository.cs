@@ -28,3 +28,4 @@ public sealed class OutboxRepository : IOutboxRepository
             .ToListAsync(cancellationToken);
     }
 }
+

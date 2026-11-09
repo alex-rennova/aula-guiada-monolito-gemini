@@ -1,6 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using aula_guiada_monolito_gemini.Application.Interfaces;
 using aula_guiada_monolito_gemini.Domain.Entities;
+using aula_guiada_monolito_gemini.Domain.ValueObjects;
 using aula_guiada_monolito_gemini.Infrastructure.Data;
 
 namespace aula_guiada_monolito_gemini.Infrastructure.Repositories;
@@ -21,12 +22,20 @@ public sealed class ClienteRepository : IClienteRepository
 
     public async Task<Cliente?> ObterPorCpfAsync(string cpf, CancellationToken cancellationToken = default)
     {
-        return await _context.Clientes.FirstOrDefaultAsync(c => c.Cpf.Value == cpf, cancellationToken);
+        var resultado = Cpf.Create(cpf);
+        if (resultado.IsFailure) return null;
+
+        var normalizado = resultado.Value;
+        return await _context.Clientes.FirstOrDefaultAsync(c => c.Cpf == normalizado, cancellationToken);
     }
 
     public async Task<bool> ExisteCpfAsync(string cpf, CancellationToken cancellationToken = default)
     {
-        return await _context.Clientes.AnyAsync(c => c.Cpf.Value == cpf, cancellationToken);
+        var resultado = Cpf.Create(cpf);
+        if (resultado.IsFailure) return false;
+
+        var normalizado = resultado.Value;
+        return await _context.Clientes.AnyAsync(c => c.Cpf == normalizado, cancellationToken);
     }
 
     public async Task AdicionarAsync(Cliente cliente, CancellationToken cancellationToken = default)

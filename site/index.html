@@ -25,40 +25,44 @@
             <button class="close-sidebar-btn" id="close-sidebar-btn" aria-label="Fechar menu">✕</button>
         </div>
 
-        <nav class="nav-container">
+        <nav class="nav-container" aria-label="Aulas do Banco Digital">
             <div class="nav-section-title">Arquitetura Geral</div>
-            <div class="nav-item active" data-lesson="overview">
+            <button type="button" class="nav-item active" data-lesson="overview">
                 <span>🌐</span>
                 <span>Visão do Banco & Canais</span>
                 <span class="nav-badge">Arquitetura</span>
-            </div>
+            </button>
 
             <div class="nav-section-title">Domínios & Aulas</div>
-            <div class="nav-item" data-lesson="aula01">
+            <button type="button" class="nav-item" data-lesson="aula01">
                 <span>⚡</span>
-                <span>Fundamentos: Clean DI</span>
+                <span>Aula 01: Clean DI & Fundamentos</span>
                 <span class="nav-badge">Concluída</span>
-            </div>
-            <div class="nav-item" data-lesson="aula02">
+            </button>
+            <button type="button" class="nav-item" data-lesson="aula02">
                 <span>🏛️</span>
-                <span>Modelagem: 6 Áreas do Banco</span>
+                <span>Aula 02: Modelagem & 6 Bounded Contexts</span>
                 <span class="nav-badge">Concluída</span>
-            </div>
-            <div class="nav-item" data-lesson="aula03">
+            </button>
+            <button type="button" class="nav-item" data-lesson="aula03">
                 <span>🎯</span>
-                <span>Casos de Uso & FluentValidation</span>
+                <span>Aula 03: Casos de Uso & FluentValidation</span>
                 <span class="nav-badge">Concluída</span>
-            </div>
-            <div class="nav-item" data-lesson="aula04">
-                <span>🚀</span>
-                <span>Decomposição: Microsserviço PIX</span>
-                <span class="nav-badge">Concluída</span>
-            </div>
-            <div class="nav-item" data-lesson="aula05">
-                <span>📈</span>
-                <span>Resiliência & Observabilidade</span>
-                <span class="nav-badge pending">A seguir</span>
-            </div>
+            </button>
+            <div class="nav-section-title">Laboratório Pix</div>
+            <button type="button" class="nav-item" data-lesson="aula04">
+                <span>1</span>
+                <span>Reproduza o Dual-Write</span>
+            </button>
+            <button type="button" class="nav-item" data-lesson="aula05">
+                <span>2</span>
+                <span>Implemente a Outbox</span>
+            </button>
+            <button type="button" class="nav-item" data-lesson="aula06">
+                <span>3</span>
+                <span>Investigue a Reentrega</span>
+                <span class="nav-badge pending">Desafio</span>
+            </button>
         </nav>
     </aside>
 
@@ -75,7 +79,7 @@
             </div>
             <div class="status-pill">
                 <span class="status-dot"></span>
-                <span>Solução 100% Compilando • 11 Testes Passando</span>
+                <span>Trilha prática de arquitetura</span>
             </div>
         </header>
 
@@ -84,7 +88,7 @@
             <section class="hero">
                 <span class="hero-tag" id="hero-tag">Arquitetura de Referência</span>
                 <h2 id="hero-title">Banco Digital: Do Monólito Modular aos Microsserviços</h2>
-                <p id="hero-desc">Uma simulação real de uma instituição financeira completa (Clientes, Contas, Pagamentos, Seguros e Investimentos) operando em um monólito coeso no PostgreSQL, mas projetado para ser decomposto sem dor.</p>
+                <p id="hero-desc">Um banco digital didático em .NET e PostgreSQL para praticar modelagem, consistência e evolução da arquitetura.</p>
             </section>
 
             <!-- Corpo da Aula carregado via JavaScript -->
@@ -92,6 +96,7 @@
         </main>
     </div>
 
+    <script src="assets/js/pix-lessons.js"></script>
     <script src="assets/js/app.js"></script>
 </body>
 </html>

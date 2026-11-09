@@ -162,7 +162,7 @@ public class BancoDigitalApplicationTests
     }
 
     [Fact]
-    public async Task AgendarPagamentoPix_ComContaAtiva_DeveGravarOperacaoEOutboxMessageAtomicamente()
+    public async Task AgendarPagamentoPix_ComContaAtiva_DevePrepararOperacaoEOutboxParaUmCommit()
     {
         // ARRANGE: Configura repositórios com suporte a Transactional Outbox
         var contaRepo = new FakeContaRepository();
@@ -224,33 +224,47 @@ public class BancoDigitalApplicationTests
     }
 
     [Fact]
-    public async Task AgendarPagamentoPix_ComTransactionalOutbox_EliminaRiscoDePerdaDeEventos()
+    public async Task CenariDeFalha_SimulandoDualWrite_QuandoBrokerCaiAposCommit_ProvocaInconsistenciaCritica()
     {
-        // PROVA DE CONCEITO: O caso de uso NÃO depende de conexões de rede externas.
-        // A mensagem é persistida na tabela outbox_messages no mesmo commit.
+        // Simulação em memória: o pagamento é agendado antes da falha de publicação.
         var contaRepo = new FakeContaRepository();
         var pagRepo = new FakePagamentoRepository();
-        var outboxRepo = new FakeOutboxRepository();
         var uow = new FakeUnitOfWork();
 
-        var conta = Conta.Abrir(Guid.NewGuid(), "12345-6").Value;
+        var conta = Conta.Abrir(Guid.NewGuid(), "99999-9").Value;
         await contaRepo.AdicionarAsync(conta);
 
-        var validator = new AgendarPagamentoPixRequestValidator();
-        var useCase = new AgendarPagamentoPixUseCase(pagRepo, contaRepo, outboxRepo, uow, validator);
+        var pagamento = OperacaoPagamento.Criar(conta.Id, 500m, "erro-broker@pix.com").Value;
+        await pagRepo.AdicionarAsync(pagamento);
+        await uow.CommitAsync();
 
-        var request = new AgendarPagamentoPixRequest(conta.Id, 1000m, "chave-segura@pix.com");
+        Func<Task> publicarDiretoNoBroker = () => throw new TimeoutException("Fila simulada indisponível.");
+        await Assert.ThrowsAsync<TimeoutException>(publicarDiretoNoBroker);
 
-        // Execução sem chamadas de rede externas no caminho crítico HTTP
-        var result = await useCase.ExecutarAsync(request);
+        Assert.Equal(StatusOperacao.Agendado, Assert.Single(pagRepo.Pagamentos).Status);
+        Assert.Equal(1, uow.CommitsCount);
+    }
 
-        Assert.True(result.IsSuccess);
-        Assert.Single(pagRepo.Pagamentos);
-        Assert.Single(outboxRepo.Messages);
+    [Fact]
+    public async Task CenariDeFalha_QuandoBancoFalhaAposPublicarNoBroker_GeraMensagemFantasma()
+    {
+        // Simulação em memória: a fila aceita o aviso antes da falha no commit.
+        var messagesFila = new List<string>();
+        var uowQueFalha = new FakeUnitOfWorkComErro();
 
-        // A mensagem está garantida no disco/PostgreSQL para entrega posterior pelo Worker
-        var msg = outboxRepo.Messages[0];
-        Assert.Equal(nameof(PagamentoPixAgendadoEvent), msg.Tipo);
-        Assert.Null(msg.ProcessadoEm);
+        messagesFila.Add("PAGAMENTO_SOLICITADO_1000_REAIS");
+
+        var ex = await Assert.ThrowsAsync<InvalidOperationException>(() => uowQueFalha.CommitAsync());
+
+        Assert.Equal("PAGAMENTO_SOLICITADO_1000_REAIS", Assert.Single(messagesFila));
+        Assert.Equal("Falha de IO no PostgreSQL!", ex.Message);
+    }
+}
+
+public sealed class FakeUnitOfWorkComErro : IUnitOfWork
+{
+    public Task<int> CommitAsync(CancellationToken cancellationToken = default)
+    {
+        throw new InvalidOperationException("Falha de IO no PostgreSQL!");
     }
 }

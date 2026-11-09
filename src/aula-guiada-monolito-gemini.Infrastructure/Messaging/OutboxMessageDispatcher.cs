@@ -1,8 +1,9 @@
+using System.Text.Json;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
+using aula_guiada_monolito_gemini.Application.Events;
 using aula_guiada_monolito_gemini.Application.Interfaces;
-using aula_guiada_monolito_gemini.Infrastructure.Data;
 
 namespace aula_guiada_monolito_gemini.Infrastructure.Messaging;
 
@@ -28,6 +29,10 @@ public sealed class OutboxMessageDispatcher : BackgroundService
             try
             {
                 await ProcessarMensagensPendentesAsync(stoppingToken);
+            }
+            catch (OperationCanceledException) when (stoppingToken.IsCancellationRequested)
+            {
+                return;
             }
             catch (Exception ex)
             {
@@ -57,18 +62,27 @@ public sealed class OutboxMessageDispatcher : BackgroundService
             {
                 _logger.LogInformation("[OutboxDispatcher] Despachando mensagem {Id} do tipo {Tipo}...", msg.Id, msg.Tipo);
 
-                // Marca como processada e persiste a confirmação
-                msg.MarcarComoProcessada();
-                await unitOfWork.CommitAsync(cancellationToken);
+                if (msg.Tipo != nameof(PagamentoPixAgendadoEvent))
+                    throw new InvalidOperationException($"Tipo de evento não suportado: {msg.Tipo}.");
 
-                _logger.LogInformation("[OutboxDispatcher] ✅ Mensagem {Id} processada com sucesso!", msg.Id);
+                var evento = JsonSerializer.Deserialize<PagamentoPixAgendadoEvent>(msg.Payload)
+                    ?? throw new JsonException("O payload da mensagem está vazio.");
+
+                await eventBus.PublicarAsync(evento, cancellationToken);
             }
-            catch (Exception ex)
+            catch (Exception ex) when (!cancellationToken.IsCancellationRequested)
             {
                 _logger.LogError(ex, "[OutboxDispatcher] ❌ Falha ao despachar mensagem {Id}.", msg.Id);
                 msg.RegistrarFalha(ex.Message);
                 await unitOfWork.CommitAsync(cancellationToken);
+                continue;
             }
+
+            // Uma falha neste commit encerra o lote. A próxima leitura usa um contexto novo.
+            msg.MarcarComoProcessada();
+            await unitOfWork.CommitAsync(cancellationToken);
+            _logger.LogInformation("[OutboxDispatcher] ✅ Mensagem {Id} processada com sucesso!", msg.Id);
         }
     }
 }
+

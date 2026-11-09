@@ -27,6 +27,7 @@ public sealed class OutboxMessage
 
     public void RegistrarFalha(string erro)
     {
-        Erro = erro;
+        Erro = erro.Length <= 1000 ? erro : erro[..1000];
     }
 }
+

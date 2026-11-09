@@ -3,7 +3,7 @@ const lessons = {
     overview: {
         tag: "Arquitetura de Referência",
         title: "Banco Digital: Do Monólito Modular aos Microsserviços",
-        desc: "Aprenda por que o padrão 'Monolith First' com limites estritos de DDD é a estratégia mais bem-sucedida em fintechs e grandes bancos, permitindo transações ACID hoje e decomposição cirúrgica amanhã.",
+        desc: "Aprenda por que o padrão 'Monolith First' com limites estritos de DDD é uma forma de manter transações locais enquanto você aprende onde estão os limites do domínio.",
         content: `
             <div class="section">
                 <h3 class="section-title"><span>🚨</span> O Cenário Real: A Armadilha dos 'Microsserviços Day 1'</h3>
@@ -31,7 +31,7 @@ const lessons = {
                             <div class="info-card-icon" style="background:#ecfdf5; color:#047857;">✅</div>
                             <h4>A Abordagem Sênior Aplicada</h4>
                         </div>
-                        <p>Construir um <strong>Monólito Modular no .NET 10</strong>. Todos os módulos compartilham o mesmo banco PostgreSQL, mas <strong>nenhum módulo cruza Foreign Keys nem referencia tabelas alheias</strong>. As referências são puramente lógicas (ex: <code>ContaOrigemId: Guid</code>), permitindo separar o banco no futuro com esforço zero.</p>
+                        <p>Construir um <strong>Monólito Modular no .NET 10</strong>. Todos os módulos compartilham o mesmo banco PostgreSQL, mas <strong>nenhum módulo cruza Foreign Keys nem referencia tabelas alheias</strong>. As referências são puramente lógicas (ex: <code>ContaOrigemId: Guid</code>), reduzindo o acoplamento para uma possível extração. A extração também exige migrar dados, manter contratos e tratar falhas de rede.</p>
                     </div>
                 </div>
             </div>
@@ -131,6 +131,23 @@ const lessons = {
                     </div>
                     <p>Quando você compra uma cafeteira, ela vem com um plugue de 3 pinos feito sob uma norma padronizada (uma <em>Abstração</em>). A cafeteira não precisa saber se a eletricidade veio de uma hidrelétrica em Itaipu, de um painel solar no telhado ou de um gerador a diesel (a <em>Implementação Concreta</em>).<br><br>
                     Se a cafeteira precisasse ser soldada diretamente nos cabos da usina de energia, para trocar de casa você precisaria de um engenheiro eletricista! <strong>O Program.cs inflado faz exatamente isso:</strong> ele amarra a porta de entrada da sua aplicação aos mínimos detalhes do banco de dados e dos repositórios. Com o <em>Clean DI</em>, o Program.cs só enxerga o plugue.</p>
+                </div>
+
+                <!-- Card Visual com Ilustração Didática dos Ciclos de Vida de DI -->
+                <div class="analogy-visual-box">
+                    <div class="analogy-visual-header">
+                        <h4><span>🧸</span> Fábrica de Brinquedos: Entenda Transient, Scoped e Singleton no .NET</h4>
+                        <span class="file-tag">Conceito Fundamental de Injeção de Dependências</span>
+                    </div>
+                    <div class="analogy-img-wrapper">
+                        <img src="assets/images/injecao-dependencia-analogia.jpg" alt="Fábrica de Brinquedos - Analogia dos Ciclos de Vida em Injeção de Dependência">
+                    </div>
+                    <div class="analogy-caption">
+                        <strong>Como funciona no nosso banco:</strong><br>
+                        • <strong>Transient (O Criador Sem Fim):</strong> Cria uma nova instância a cada injeção (ex: validadores do FluentValidation rápidos e sem estado).<br>
+                        • <strong>Scoped (O Amigo da Brincadeira):</strong> Compartilha a mesma instância durante toda a requisição HTTP atual (ex: <code>AppDbContext</code>, Repositórios e <code>IUnitOfWork</code>). Cada cliente/request tem seu próprio carrinho!<br>
+                        • <strong>Singleton (O Brinquedão de Todo Mundo):</strong> Uma única instância para a vida inteira da aplicação (ex: conexões TCP pesadas, clientes do RabbitMQ e barramento de eventos).
+                    </div>
                 </div>
 
                 <div class="comparison-container">
@@ -563,179 +580,7 @@ public async Task&lt;IActionResult&gt; Criar([FromBody] CriarClienteRequest req)
         `
     },
 
-    aula04: {
-        tag: "Microsserviços • Concluída",
-        title: "Decomposição Estratégica: Extraindo o Módulo de Pagamentos (PIX)",
-        desc: "Como desacoplar a vertical de Pagamentos para um microsserviço independente (PixService) com mensageria assíncrona, eventos de integração e background worker.",
-        content: `
-            <div class="section">
-                <h3 class="section-title"><span>🚨</span> O Problema Real: Chamadas Síncronas Travando o Monólito</h3>
-
-                <div class="real-world-analogy">
-                    <div class="real-world-analogy-header">
-                        <span style="font-size: 1.4rem;">📮</span>
-                        <h4>Analogia do Mundo Real: O Garçom do Restaurante vs. O Correio</h4>
-                    </div>
-                    <p>Imagine que você vai a um restaurante movimentado e pede uma pizza. Se o garçom anotar seu pedido, for até a cozinha e <strong>ficar em pé na frente do forno esperando a pizza assar por 30 minutos</strong> antes de atender qualquer outra mesa, o restaurante entra em colapso imediatamente (as mesas ficam sem atendimento).<br><br>
-                    <strong>Isso é o HTTP Síncrono:</strong> a thread do servidor web fica travada esperando o Banco Central responder.<br><br>
-                    <strong>A Abordagem Assíncrona (Event-Driven):</strong> O garçom anota o pedido, coloca o bilhete no espeto da cozinha (<em>publica o evento na fila</em>), entrega a comanda na sua mesa em 5 segundos e vai atender outro cliente. Quando a pizza fica pronta, a cozinha entrega (<em>Worker processando em segundo plano</em>).</p>
-                </div>
-
-                <div class="comparison-container">
-                    <div class="code-box">
-                        <div class="code-header">
-                            <span>❌ Como NÃO Fazer: Chamada HTTP Síncrona Bloqueante</span>
-                            <span class="code-badge-bad">Perigo de Efeito Dominó</span>
-                        </div>
-                        <pre><code>[HttpPost("pix")]
-public async Task&lt;IActionResult&gt; Pagar([FromBody] PixRequest req)
-{
-    // A Thread web fica travada esperando a rede externa!
-    // Se o Banco Central levar 4 segundos, 100 usuários travam o servidor todo!
-    var respostaBacen = await _httpClient.PostAsync("https://bacen/pix/liquidar", ...);
-    
-    if (!respostaBacen.IsSuccessStatusCode)
-        return StatusCode(500, "BACEN indisponível");
-}</code></pre>
-                    </div>
-
-                    <div class="code-box">
-                        <div class="code-header">
-                            <span>✅ Como DEVE Ser Feito: Event-Driven Assíncrono com EventBus</span>
-                            <span class="code-badge-good">Alta Disponibilidade (Milissegundos)</span>
-                        </div>
-                        <pre><code>// 1. Salva a intenção no banco local e publica evento na fila:
-await _pagamentoRepository.AdicionarAsync(operacao, ct);
-await _unitOfWork.CommitAsync(ct);
-
-// 2. Dispara evento assíncrono e libera o app do usuário em 10ms!
-await _eventBus.PublicarAsync(new PagamentoPixAgendadoEvent(...), ct);
-return Result.Success(operacaoDto);
-
-// 3. O PixService consome a fila em background sem travar o monólito!</code></pre>
-                    </div>
-                </div>
-            </div>
-
-            <div class="section">
-                <h3 class="section-title"><span>📦</span> O Que Foi Feito no Projeto (.NET 10) & Onde Fica Cada Código</h3>
-
-                <!-- Deep Dive 1: Eventos de Integração -->
-                <div class="deep-dive-card">
-                    <div class="deep-dive-title">
-                        <h4>1. Contratos de Eventos de Integração</h4>
-                        <span class="file-tag">src/aula-guiada-monolito-gemini.Application/Events/PagamentoPixEvents.cs</span>
-                    </div>
-                    <p style="color: var(--text-secondary); margin-bottom: 12px;"><strong>O Porquê:</strong> Para dois sistemas conversarem sem acoplamento de código, eles precisam apenas de contratos de dados puros (records com id do evento e timestamp UTC):</p>
-                    
-                    <div class="code-box">
-                        <div class="code-header"><span>PagamentoPixEvents.cs (Integration Events)</span><span class="code-badge-good">Immutable Record</span></div>
-                        <pre><code>public interface IIntegrationEvent
-{
-    Guid Id { get; }
-    DateTime OcorridoEm { get; }
-}
-
-public sealed record PagamentoPixAgendadoEvent(
-    Guid EventId,
-    Guid OperacaoId,
-    Guid ContaOrigemId,
-    decimal Valor,
-    string ChavePix,
-    DateTime AgendadoPara,
-    DateTime OcorridoEm
-) : IIntegrationEvent;</code></pre>
-                    </div>
-                </div>
-
-                <!-- Deep Dive 2: InMemoryEventBus -->
-                <div class="deep-dive-card">
-                    <div class="deep-dive-title">
-                        <h4>2. Barramento de Mensageria em Memória de Alta Performance</h4>
-                        <span class="file-tag">src/aula-guiada-monolito-gemini.Infrastructure/Messaging/InMemoryEventBus.cs</span>
-                    </div>
-                    <p style="color: var(--text-secondary); margin-bottom: 12px;"><strong>O Porquê:</strong> Em vez de forçar a instalação de um servidor RabbitMQ ou Kafka no Day 1 de desenvolvimento, criamos um <code>IEventBus</code> baseado em <code>System.Threading.Channels.Channel</code>. Ele opera com zero alocação de memória e permite trocar para RabbitMQ com uma única linha no <code>DependencyInjection.cs</code> no futuro:</p>
-                    
-                    <div class="code-box">
-                        <div class="code-header"><span>InMemoryEventBus.cs (Channels API)</span><span class="code-badge-good">High Throughput</span></div>
-                        <pre><code>public sealed class InMemoryEventBus : IEventBus
-{
-    private readonly Channel&lt;IIntegrationEvent&gt; _channel = Channel.CreateUnbounded&lt;IIntegrationEvent&gt;();
-
-    public async Task PublicarAsync&lt;TEvent&gt;(TEvent evento, CancellationToken ct = default)
-        where TEvent : class, IIntegrationEvent
-    {
-        await _channel.Writer.WriteAsync(evento, ct);
-    }
-}</code></pre>
-                    </div>
-                </div>
-
-                <!-- Deep Dive 3: O Microsserviço PixService -->
-                <div class="deep-dive-card">
-                    <div class="deep-dive-title">
-                        <h4>3. O Microsserviço Independente: PixService</h4>
-                        <span class="file-tag">src/aula-guiada-monolito-gemini.PixService/Program.cs & Workers/PixWorkerConsumer.cs</span>
-                    </div>
-                    <p style="color: var(--text-secondary); margin-bottom: 12px;"><strong>O Porquê:</strong> Criamos um projeto .NET 10 Web API / Worker totalmente autônomo. Ele possui seu próprio <code>Program.cs</code> e seu próprio <code>BackgroundService</code> que escuta a fila e realiza a liquidação oficial com o Sistema de Pagamentos Instantâneos (SPI) do Banco Central:</p>
-                    
-                    <div class="code-box">
-                        <div class="code-header"><span>PixWorkerConsumer.cs (Background Worker do Microsserviço)</span><span class="code-badge-good">Hosted Service</span></div>
-                        <pre><code>public sealed class PixWorkerConsumer : BackgroundService
-{
-    protected override async Task ExecuteAsync(CancellationToken stoppingToken)
-    {
-        _logger.LogInformation("[PixService] Worker ativo e conectado ao Barramento...");
-
-        while (!stoppingToken.IsCancellationRequested)
-        {
-            // Consome eventos assíncronos da fila e envia para liquidação no SPI / BACEN
-            await Task.Delay(5000, stoppingToken);
-        }
-    }
-}</code></pre>
-                    </div>
-                </div>
-            </div>
-        `
-    },
-
-    aula05: {
-        tag: "Resiliência • Próximo Passo",
-        title: "Resiliência, Circuit Breaker & Distributed Tracing",
-        desc: "Como proteger microsserviços contra efeito dominó usando Polly v8 (Circuit Breaker, Retry com Jitter) e instrumentação OpenTelemetry correlacionada.",
-        content: `
-            <div class="section">
-                <h3 class="section-title"><span>🚨</span> O Cenário Real: Efeito Dominó em Sistemas Distribuídos</h3>
-
-                <div class="real-world-analogy">
-                    <div class="real-world-analogy-header">
-                        <span style="font-size: 1.4rem;">⚡</span>
-                        <h4>Analogia do Mundo Real: O Disjuntor da Caixa de Força</h4>
-                    </div>
-                    <p>Na sua casa, se houver um curto-circuito na fiação do chuveiro, o <strong>Disjuntor (Circuit Breaker)</strong> da caixa de força desarma imediatamente para proteger a fiação da casa de pegar fogo.<br><br>
-                    <strong>Em microsserviços é a mesma coisa:</strong> se o Banco Central ou a adquirente de cartão começar a falhar em 50% dos pedidos, o <em>Circuit Breaker (Polly v8)</em> deve abrir na hora. Em vez de sua aplicação continuar enviando requisições que demoram 30 segundos e derrubam seus servidores, ela responde instantaneamente com fallback educado ao cliente.</p>
-                </div>
-
-                <div class="card-grid">
-                    <div class="info-card" style="border-left: 4px solid #2563eb;">
-                        <div class="info-card-header">
-                            <div class="info-card-icon icon-blue">🛡️</div>
-                            <h4>Circuit Breaker & Retry com Jitter</h4>
-                        </div>
-                        <p>Polly v8 configurado para interromper chamadas a serviços instáveis, com retentativas calculadas com jitter (variação aleatória) para não sobrecarregar o serviço na volta.</p>
-                    </div>
-                    <div class="info-card" style="border-left: 4px solid #7c3aed;">
-                        <div class="info-card-header">
-                            <div class="info-card-icon icon-purple">🔍</div>
-                            <h4>OpenTelemetry & W3C TraceContext</h4>
-                        </div>
-                        <p>Instrumentação distribuída: acompanhe um PIX saindo do Monólito e entrando no PixService através de um <code>TraceId</code> global nos logs, Jaeger e Prometheus.</p>
-                    </div>
-                </div>
-            </div>
-        `
-    }
+    ...pixLessons
 };
 
 function renderLesson(key) {
@@ -744,11 +589,9 @@ function renderLesson(key) {
 
     // Atualiza links ativos
     document.querySelectorAll(".nav-item").forEach(item => {
-        if (item.getAttribute("data-lesson") === key) {
-            item.classList.add("active");
-        } else {
-            item.classList.remove("active");
-        }
+        const selected = item.dataset.lesson === key;
+        item.classList.toggle("active", selected);
+        item.setAttribute("aria-current", selected ? "page" : "false");
     });
 
     // Atualiza o conteúdo da página
@@ -793,10 +636,15 @@ document.addEventListener("DOMContentLoaded", () => {
     document.querySelectorAll(".nav-item").forEach(button => {
         button.addEventListener("click", () => {
             const key = button.getAttribute("data-lesson");
-            renderLesson(key);
+            if (location.hash === "#" + key) closeSidebar();
+            else location.hash = key;
         });
     });
 
-    // Renderiza a visão geral do banco por padrão
-    renderLesson("overview");
+    const renderLocation = () => {
+        const key = location.hash.slice(1);
+        renderLesson(Object.hasOwn(lessons, key) ? key : "overview");
+    };
+    window.addEventListener("hashchange", renderLocation);
+    renderLocation();
 });
