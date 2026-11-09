@@ -1,3 +1,4 @@
+using System.Text.Json;
 using FluentValidation;
 using aula_guiada_monolito_gemini.Application.DTOs;
 using aula_guiada_monolito_gemini.Application.Events;
@@ -17,22 +18,22 @@ public sealed class AgendarPagamentoPixUseCase : IAgendarPagamentoPixUseCase
 {
     private readonly IPagamentoRepository _pagamentoRepository;
     private readonly IContaRepository _contaRepository;
+    private readonly IOutboxRepository _outboxRepository;
     private readonly IUnitOfWork _unitOfWork;
     private readonly IValidator<AgendarPagamentoPixRequest> _validator;
-    private readonly IEventBus _eventBus;
 
     public AgendarPagamentoPixUseCase(
         IPagamentoRepository pagamentoRepository,
         IContaRepository contaRepository,
+        IOutboxRepository outboxRepository,
         IUnitOfWork unitOfWork,
-        IValidator<AgendarPagamentoPixRequest> validator,
-        IEventBus eventBus)
+        IValidator<AgendarPagamentoPixRequest> validator)
     {
         _pagamentoRepository = pagamentoRepository;
         _contaRepository = contaRepository;
+        _outboxRepository = outboxRepository;
         _unitOfWork = unitOfWork;
         _validator = validator;
-        _eventBus = eventBus;
     }
 
     public async Task<Result<OperacaoPagamentoDto>> ExecutarAsync(AgendarPagamentoPixRequest request, CancellationToken cancellationToken = default)
@@ -62,10 +63,8 @@ public sealed class AgendarPagamentoPixUseCase : IAgendarPagamentoPixUseCase
         }
 
         var operacao = operacaoResult.Value;
-        await _pagamentoRepository.AdicionarAsync(operacao, cancellationToken);
-        await _unitOfWork.CommitAsync(cancellationToken);
 
-        // Publicação do Evento de Integração desacoplado
+        // 1. Cria o evento de integração desacoplado
         var evento = new PagamentoPixAgendadoEvent(
             Guid.NewGuid(),
             operacao.Id,
@@ -75,7 +74,23 @@ public sealed class AgendarPagamentoPixUseCase : IAgendarPagamentoPixUseCase
             operacao.AgendadoPara,
             DateTime.UtcNow
         );
-        await _eventBus.PublicarAsync(evento, cancellationToken);
+
+        // 2. Converte para OutboxMessage (Transactional Outbox Pattern)
+        var outboxMessage = new OutboxMessage(
+            evento.EventId,
+            nameof(PagamentoPixAgendadoEvent),
+            JsonSerializer.Serialize(evento),
+            DateTime.UtcNow
+        );
+
+        // 3. PERSISTÊNCIA ATÔMICA ACID:
+        // A OperacaoPagamento E a OutboxMessage são adicionadas no mesmo DbContext
+        await _pagamentoRepository.AdicionarAsync(operacao, cancellationToken);
+        await _outboxRepository.AdicionarAsync(outboxMessage, cancellationToken);
+
+        // 4. Um único commit salva ambos!
+        // Não há chamada de rede aqui: zero risco de Dual-Write!
+        await _unitOfWork.CommitAsync(cancellationToken);
 
         return Result.Success(new OperacaoPagamentoDto(
             operacao.Id,

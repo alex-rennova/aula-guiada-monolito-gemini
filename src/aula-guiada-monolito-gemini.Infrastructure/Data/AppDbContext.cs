@@ -29,6 +29,9 @@ public sealed class AppDbContext : DbContext
     // Contexto: Investimentos
     public DbSet<PosicaoInvestimento> Investimentos => Set<PosicaoInvestimento>();
 
+    // Padrão Transactional Outbox
+    public DbSet<OutboxMessage> OutboxMessages => Set<OutboxMessage>();
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         // 1. Clientes (Schema/Tabela: clientes)
@@ -109,6 +112,21 @@ public sealed class AppDbContext : DbContext
                 .HasConversion(m => m.Amount, val => Money.Create(val).Value)
                 .HasPrecision(18, 2)
                 .IsRequired();
+        });
+
+        // 7. Padrão Transactional Outbox (Schema/Tabela: outbox_messages)
+        modelBuilder.Entity<OutboxMessage>(entity =>
+        {
+            entity.ToTable("outbox_messages");
+            entity.HasKey(x => x.Id);
+            entity.Property(x => x.Tipo).HasMaxLength(150).IsRequired();
+            entity.Property(x => x.Payload).IsRequired(); // JSON do evento
+            entity.Property(x => x.CriadoEm).IsRequired();
+            entity.Property(x => x.ProcessadoEm);
+            entity.Property(x => x.Erro).HasMaxLength(1000);
+
+            // Índice para busca rápida de mensagens pendentes pelo Background Worker
+            entity.HasIndex(x => x.ProcessadoEm);
         });
     }
 }

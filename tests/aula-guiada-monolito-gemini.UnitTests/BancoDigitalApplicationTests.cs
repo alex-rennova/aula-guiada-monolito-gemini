@@ -18,18 +18,6 @@ public sealed class FakeUnitOfWork : IUnitOfWork
     }
 }
 
-public sealed class FakeEventBus : IEventBus
-{
-    public readonly List<IIntegrationEvent> EventosPublicados = [];
-
-    public Task PublicarAsync<TEvent>(TEvent evento, CancellationToken cancellationToken = default) 
-        where TEvent : class, IIntegrationEvent
-    {
-        EventosPublicados.Add(evento);
-        return Task.CompletedTask;
-    }
-}
-
 public sealed class FakeClienteRepository : IClienteRepository
 {
     public readonly List<Cliente> Clientes = [];
@@ -78,6 +66,22 @@ public sealed class FakePagamentoRepository : IPagamentoRepository
     {
         Pagamentos.Add(operacao);
         return Task.CompletedTask;
+    }
+}
+
+public sealed class FakeOutboxRepository : IOutboxRepository
+{
+    public readonly List<OutboxMessage> Messages = [];
+
+    public Task AdicionarAsync(OutboxMessage message, CancellationToken cancellationToken = default)
+    {
+        Messages.Add(message);
+        return Task.CompletedTask;
+    }
+
+    public Task<List<OutboxMessage>> ObterMensagensPendentesAsync(int limite = 20, CancellationToken cancellationToken = default)
+    {
+        return Task.FromResult(Messages.Where(m => m.ProcessadoEm == null).Take(limite).ToList());
     }
 }
 
@@ -158,33 +162,44 @@ public class BancoDigitalApplicationTests
     }
 
     [Fact]
-    public async Task AgendarPagamentoPix_ComContaAtiva_DeveAgendarEPublicarEvento()
+    public async Task AgendarPagamentoPix_ComContaAtiva_DeveGravarOperacaoEOutboxMessageAtomicamente()
     {
+        // ARRANGE: Configura repositórios com suporte a Transactional Outbox
         var contaRepo = new FakeContaRepository();
         var pagRepo = new FakePagamentoRepository();
+        var outboxRepo = new FakeOutboxRepository();
         var uow = new FakeUnitOfWork();
-        var eventBus = new FakeEventBus();
 
         var conta = Conta.Abrir(Guid.NewGuid(), "12345-6").Value;
         await contaRepo.AdicionarAsync(conta);
 
         var validator = new AgendarPagamentoPixRequestValidator();
-        var useCase = new AgendarPagamentoPixUseCase(pagRepo, contaRepo, uow, validator, eventBus);
+        var useCase = new AgendarPagamentoPixUseCase(pagRepo, contaRepo, outboxRepo, uow, validator);
 
         var request = new AgendarPagamentoPixRequest(conta.Id, 250m, "pix-chave@teste.com");
+
+        // ACT
         var result = await useCase.ExecutarAsync(request);
 
+        // ASSERT: Sucesso da requisição
         Assert.True(result.IsSuccess);
         Assert.Equal(StatusOperacao.Agendado, result.Value.Status);
         Assert.Equal(250m, result.Value.Valor);
+
+        // 🛡️ COMPROVAÇÃO DO TRANSACTIONAL OUTBOX:
+        // 1. Apenas 1 commit atômico foi realizado
         Assert.Equal(1, uow.CommitsCount);
 
-        // Verifica a publicação do evento assíncrono para o microsserviço
-        Assert.Single(eventBus.EventosPublicados);
-        var evento = Assert.IsType<PagamentoPixAgendadoEvent>(eventBus.EventosPublicados[0]);
-        Assert.Equal(250m, evento.Valor);
-        Assert.Equal("pix-chave@teste.com", evento.ChavePix);
-        Assert.Equal(conta.Id, evento.ContaOrigemId);
+        // 2. A operação de pagamento foi salva
+        Assert.Single(pagRepo.Pagamentos);
+
+        // 3. A OutboxMessage foi salva no MESMO commit
+        Assert.Single(outboxRepo.Messages);
+        var outboxMessage = outboxRepo.Messages[0];
+        Assert.Equal(nameof(PagamentoPixAgendadoEvent), outboxMessage.Tipo);
+        Assert.Contains("pix-chave@teste.com", outboxMessage.Payload);
+        Assert.Contains("250", outboxMessage.Payload);
+        Assert.Null(outboxMessage.ProcessadoEm); // Mensagem pendente para o Dispatcher
     }
 
     [Fact]
@@ -206,5 +221,36 @@ public class BancoDigitalApplicationTests
         Assert.True(result.IsSuccess);
         Assert.Equal(1500m, result.Value.SaldoAtual);
         Assert.Equal(1, uow.CommitsCount);
+    }
+
+    [Fact]
+    public async Task AgendarPagamentoPix_ComTransactionalOutbox_EliminaRiscoDePerdaDeEventos()
+    {
+        // PROVA DE CONCEITO: O caso de uso NÃO depende de conexões de rede externas.
+        // A mensagem é persistida na tabela outbox_messages no mesmo commit.
+        var contaRepo = new FakeContaRepository();
+        var pagRepo = new FakePagamentoRepository();
+        var outboxRepo = new FakeOutboxRepository();
+        var uow = new FakeUnitOfWork();
+
+        var conta = Conta.Abrir(Guid.NewGuid(), "12345-6").Value;
+        await contaRepo.AdicionarAsync(conta);
+
+        var validator = new AgendarPagamentoPixRequestValidator();
+        var useCase = new AgendarPagamentoPixUseCase(pagRepo, contaRepo, outboxRepo, uow, validator);
+
+        var request = new AgendarPagamentoPixRequest(conta.Id, 1000m, "chave-segura@pix.com");
+
+        // Execução sem chamadas de rede externas no caminho crítico HTTP
+        var result = await useCase.ExecutarAsync(request);
+
+        Assert.True(result.IsSuccess);
+        Assert.Single(pagRepo.Pagamentos);
+        Assert.Single(outboxRepo.Messages);
+
+        // A mensagem está garantida no disco/PostgreSQL para entrega posterior pelo Worker
+        var msg = outboxRepo.Messages[0];
+        Assert.Equal(nameof(PagamentoPixAgendadoEvent), msg.Tipo);
+        Assert.Null(msg.ProcessadoEm);
     }
 }

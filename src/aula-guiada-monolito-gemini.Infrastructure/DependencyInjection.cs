@@ -28,9 +28,13 @@ public static class DependencyInjection
         services.AddScoped<IContaRepository, ContaRepository>();
         services.AddScoped<IPagamentoRepository, PagamentoRepository>();
         services.AddScoped<IInvestimentoRepository, InvestimentoRepository>();
+        services.AddScoped<IOutboxRepository, OutboxRepository>();
 
         // Barramento de Eventos Desacoplado
         services.AddSingleton<IEventBus, InMemoryEventBus>();
+
+        // Despachante da Outbox em Background (HostedService)
+        services.AddHostedService<OutboxMessageDispatcher>();
 
         return services;
     }
